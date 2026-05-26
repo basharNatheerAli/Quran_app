@@ -1,0 +1,1 @@
+import 'package:quran/quran.dart' as q; void main() { String text = q.getVerse(2, 1); print('Starts with 1? \${text.startsWith("بِسْمِ اللَّهِ الرَّحْمَـٰنِ الرَّحِيمِ ")}'); print('Starts with 2? \${text.startsWith("بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ")}'); }
