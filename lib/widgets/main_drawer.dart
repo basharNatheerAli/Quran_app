@@ -116,10 +116,16 @@ class MainDrawer extends StatelessWidget {
               ),
               title: const Text('الإشعارات'),
               activeColor: AppColors.primaryDark,
+              inactiveTrackColor: Colors.grey.shade300,
+              inactiveThumbColor: Colors.grey.shade500,
               value: provider.notificationsEnabled,
               onChanged: (val) {
                 provider.toggleNotifications();
               },
+            ),
+            Text(
+              "تطوير: بشار المخلافي - 2026",
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
             ),
           ],
         );

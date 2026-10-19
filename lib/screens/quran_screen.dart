@@ -54,40 +54,53 @@ class QuranScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
+          
           Consumer<AppProvider>(
             builder: (context, provider, child) {
               if (provider.recentSurahs.isEmpty) return const SizedBox.shrink();
-              return Container(
-                height: 60,
-                color: AppColors.primary.withOpacity(0.05),
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  itemCount: provider.recentSurahs.length,
-                  itemBuilder: (context, index) {
-                    final surahNumber = provider.recentSurahs[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
-                      child: ActionChip(
-                        label: Text(
-                          quran.getSurahNameArabic(surahNumber),
-                          style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryDark),
-                        ),
-                        backgroundColor: Colors.white,
-                        elevation: 1,
-                        side: const BorderSide(color: AppColors.primaryDark, width: 1),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => SurahScreen(surahNumber: surahNumber),
+              return Column(
+                children: [
+                  Text(
+            "آخر السور التي قرأتها",
+            style: TextStyle(
+              fontSize: AppStyles.subtitleSize,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primaryDark,
+            ),
+          ).animate().fadeIn(duration: 300.ms),
+                  Container(
+                    height: 60,
+                    color: AppColors.primary.withOpacity(0.05),
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      itemCount: provider.recentSurahs.length,
+                      itemBuilder: (context, index) {
+                        final surahNumber = provider.recentSurahs[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: ActionChip(
+                            label: Text(
+                              quran.getSurahNameArabic(surahNumber),
+                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryDark),
                             ),
-                          );
-                        },
-                      ),
-                    );
-                  },
-                ),
+                            backgroundColor: Colors.white,
+                            elevation: 1,
+                            side: const BorderSide(color: AppColors.primaryDark, width: 1),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => SurahScreen(surahNumber: surahNumber),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               );
             },
           ),

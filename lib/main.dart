@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/services.dart';
 
 import 'providers/app_provider.dart';
 import 'screens/home_screen.dart';
 import 'utils/constants.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]);
   runApp(
     MultiProvider(
       providers: [
@@ -26,24 +30,27 @@ class QuranApp extends StatelessWidget {
       title: 'Quran App',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primaryColor: AppColors.primary,
+        fontFamily: 'Amiri',
         scaffoldBackgroundColor: AppColors.background,
         colorScheme: ColorScheme.fromSwatch().copyWith(
           primary: AppColors.primary,
           secondary: AppColors.accent,
         ),
-        appBarTheme: AppBarTheme(
+        appBarTheme: const AppBarTheme(
           backgroundColor: AppColors.primary,
           elevation: 0,
           centerTitle: true,
-          titleTextStyle: GoogleFonts.amiri(
+          titleTextStyle: TextStyle(
+            fontFamily: 'Amiri',
             fontSize: 24,
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
-          iconTheme: const IconThemeData(color: Colors.white),
+          iconTheme: IconThemeData(color: Colors.white),
         ),
-        textTheme: GoogleFonts.amiriTextTheme(Theme.of(context).textTheme),
+        textTheme: ThemeData.light().textTheme.apply(
+          fontFamily: 'Amiri',
+        ),
         bottomNavigationBarTheme: const BottomNavigationBarThemeData(
           backgroundColor: Colors.white,
           selectedItemColor: AppColors.primaryDark,

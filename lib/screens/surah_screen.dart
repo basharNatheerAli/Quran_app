@@ -33,6 +33,14 @@ class _SurahScreenState extends State<SurahScreen> with WidgetsBindingObserver {
     _pageController = PageController(initialPage: widget.surahNumber - 1);
     WidgetsBinding.instance.addObserver(this);
     _startTimer();
+
+    // Enable both portrait and landscape orientation when reading Quran
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
     
     // Add initial surah to recents
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -75,40 +83,257 @@ class _SurahScreenState extends State<SurahScreen> with WidgetsBindingObserver {
     _stopTimer();
     WidgetsBinding.instance.removeObserver(this);
     _pageController.dispose();
+    // Reset orientation back to portrait when leaving the reading screen
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(quran.getSurahNameArabic(_currentSurahNumber)),
-      ),
-      body: GestureDetector(
-        onScaleStart: (details) {
-          _baseFontSizeMultiplier = _fontSizeMultiplier;
-        },
-        onScaleUpdate: (details) {
-          setState(() {
-            _fontSizeMultiplier = (_baseFontSizeMultiplier * details.scale).clamp(0.5, 3.0);
-          });
-        },
-        child: PageView.builder(
-          controller: _pageController,
-          itemCount: 114,
-          onPageChanged: (index) {
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) {
+        SystemChrome.setPreferredOrientations([
+          DeviceOrientation.portraitUp,
+        ]);
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(quran.getSurahNameArabic(_currentSurahNumber)),
+          actions: [
+            IconButton(
+              icon: Icon(
+                MediaQuery.of(context).orientation == Orientation.landscape
+                    ? Icons.stay_current_portrait
+                    : Icons.stay_current_landscape,
+              ),
+              tooltip: MediaQuery.of(context).orientation == Orientation.landscape
+                  ? 'الوضع الرأسي'
+                  : 'الوضع الأفقي',
+              onPressed: () {
+                final isLandscape =
+                    MediaQuery.of(context).orientation == Orientation.landscape;
+                if (isLandscape) {
+                  SystemChrome.setPreferredOrientations([
+                    DeviceOrientation.portraitUp,
+                    DeviceOrientation.portraitDown,
+                  ]);
+                } else {
+                  SystemChrome.setPreferredOrientations([
+                    DeviceOrientation.landscapeLeft,
+                    DeviceOrientation.landscapeRight,
+                  ]);
+                }
+              },
+            ),
+          ],
+        ),
+        body: GestureDetector(
+          onScaleStart: (details) {
+            _baseFontSizeMultiplier = _fontSizeMultiplier;
+          },
+          onScaleUpdate: (details) {
             setState(() {
-              _currentSurahNumber = index + 1;
+              _fontSizeMultiplier = (_baseFontSizeMultiplier * details.scale).clamp(0.5, 3.0);
             });
-            _provider.addRecentSurah(_currentSurahNumber);
           },
-          itemBuilder: (context, index) {
-            return SurahPageContent(
-              surahNumber: index + 1,
-              highlightVerse: (index + 1 == widget.surahNumber) ? widget.highlightVerse : null,
-              fontSizeMultiplier: _fontSizeMultiplier,
-            );
-          },
+          child: PageView.builder(
+            controller: _pageController,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 114,
+            onPageChanged: (index) {
+              setState(() {
+                _currentSurahNumber = index + 1;
+              });
+              _provider.addRecentSurah(_currentSurahNumber);
+            },
+            itemBuilder: (context, index) {
+              return SurahPageContent(
+                surahNumber: index + 1,
+                highlightVerse: (index + 1 == widget.surahNumber) ? widget.highlightVerse : null,
+                fontSizeMultiplier: _fontSizeMultiplier,
+              );
+            },
+          ),
+        ),
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 8,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: MediaQuery.of(context).orientation == Orientation.landscape
+                    ? 4.0
+                    : 8.0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildSurahNavButton(
+                    isNext: false,
+                    targetSurahName: _currentSurahNumber > 1
+                        ? quran.getSurahNameArabic(_currentSurahNumber - 1)
+                        : null,
+                    onTap: _currentSurahNumber > 1
+                        ? () => _goToSurah(_currentSurahNumber - 1)
+                        : null,
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Text(
+                      'سورة ${_currentSurahNumber} من 114',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                  ),
+                  _buildSurahNavButton(
+                    isNext: true,
+                    targetSurahName: _currentSurahNumber < 114
+                        ? quran.getSurahNameArabic(_currentSurahNumber + 1)
+                        : null,
+                    onTap: _currentSurahNumber < 114
+                        ? () => _goToSurah(_currentSurahNumber + 1)
+                        : null,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _goToSurah(int surahNumber) {
+    if (surahNumber < 1 || surahNumber > 114) return;
+    _pageController.animateToPage(
+      surahNumber - 1,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  Widget _buildSurahNavButton({
+    required bool isNext,
+    required VoidCallback? onTap,
+    required String? targetSurahName,
+  }) {
+    final isEnabled = onTap != null;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: isEnabled
+                ? AppColors.primary.withValues(alpha: 0.12)
+                : Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isEnabled
+                  ? AppColors.primary.withValues(alpha: 0.3)
+                  : Colors.grey.shade300,
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: isNext
+                ? [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'التالية',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: isEnabled
+                                ? AppColors.primaryDark
+                                : Colors.grey.shade400,
+                          ),
+                        ),
+                        if (targetSurahName != null)
+                          Text(
+                            targetSurahName,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: isEnabled ? AppColors.text : Colors.grey.shade400,
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(width: 6),
+                    Icon(
+                      Icons.arrow_back_ios_rounded,
+                      size: 14,
+                      color: isEnabled
+                          ? AppColors.primaryDark
+                          : Colors.grey.shade400,
+                    ),
+                  ]
+                : [
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 14,
+                      color: isEnabled
+                          ? AppColors.primaryDark
+                          : Colors.grey.shade400,
+                    ),
+                    const SizedBox(width: 6),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'السابقة',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: isEnabled
+                                ? AppColors.primaryDark
+                                : Colors.grey.shade400,
+                          ),
+                        ),
+                        if (targetSurahName != null)
+                          Text(
+                            targetSurahName,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: isEnabled ? AppColors.text : Colors.grey.shade400,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+          ),
         ),
       ),
     );
@@ -234,16 +459,19 @@ class _SurahPageContentState extends State<SurahPageContent> {
   void _showAyahBottomSheet(BuildContext context, int ayahNumber) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(24),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
+        return SafeArea(
+          child: SingleChildScrollView(
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -336,10 +564,12 @@ class _SurahPageContentState extends State<SurahPageContent> {
               ),
             ],
           ),
-        );
-      },
+        ),
+      ),
     );
-  }
+  },
+);
+}
 
   Widget _buildActionIcon({
     required IconData icon,
@@ -392,6 +622,7 @@ class _SurahPageContentState extends State<SurahPageContent> {
                     quran.basmala,
                     textAlign: TextAlign.center,
                     style: TextStyle(
+                      fontFamily: 'AmiriQuran',
                       fontSize: AppStyles.titleSize * widget.fontSizeMultiplier,
                       fontWeight: FontWeight.bold,
                       color: AppColors.text,
@@ -414,9 +645,10 @@ class _SurahPageContentState extends State<SurahPageContent> {
                             ) +
                             ' ',
                         style: TextStyle(
+                          fontFamily: 'AmiriQuran',
                           fontSize: AppStyles.titleSize * widget.fontSizeMultiplier,
                           color: AppColors.text,
-                          height: 2.0,
+                          height: 2.2,
                           backgroundColor: widget.highlightVerse == i
                               ? AppColors.primary.withOpacity(0.3)
                               : Colors.transparent,
@@ -429,6 +661,7 @@ class _SurahPageContentState extends State<SurahPageContent> {
                             ) +
                             ' ',
                         style: TextStyle(
+                          fontFamily: 'AmiriQuran',
                           color: AppColors.primaryDark,
                           fontSize: AppStyles.titleSize * widget.fontSizeMultiplier,
                           backgroundColor: widget.highlightVerse == i
