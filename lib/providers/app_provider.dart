@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:quran/quran.dart' as quran;
 import '../models/models.dart';
 
 // Top-level function for compute
@@ -58,6 +59,18 @@ class AppProvider extends ChangeNotifier {
 
   Map<int, double> _surahScrollOffsets = {};
   double getSurahScrollOffset(int surah) => _surahScrollOffsets[surah] ?? 0.0;
+
+  bool _isQuranPageMode = false;
+  bool get isQuranPageMode => _isQuranPageMode;
+
+  Map<int, int> _surahLastPages = {};
+  int getSurahLastPage(int surah) {
+    if (_surahLastPages.containsKey(surah)) {
+      return _surahLastPages[surah]!;
+    }
+    return quran.getSurahPages(surah).first;
+  }
+  bool hasSurahLastPage(int surah) => _surahLastPages.containsKey(surah);
 
   // Data
   List<Hadith> _hadiths = [];
@@ -117,6 +130,16 @@ class AppProvider extends ChangeNotifier {
       _surahScrollOffsets = offsetsMap.map((key, value) => MapEntry(int.parse(key), (value as num).toDouble()));
     } catch (e) {
       _surahScrollOffsets = {};
+    }
+
+    _isQuranPageMode = _prefs?.getBool('isQuranPageMode') ?? false;
+
+    try {
+      final pagesStr = _prefs?.getString('surahLastPages') ?? '{}';
+      final pagesMap = json.decode(pagesStr) as Map<String, dynamic>;
+      _surahLastPages = pagesMap.map((key, value) => MapEntry(int.parse(key), value as int));
+    } catch (e) {
+      _surahLastPages = {};
     }
   }
 
@@ -226,6 +249,21 @@ class AppProvider extends ChangeNotifier {
   void saveSurahScrollOffset(int surah, double offset) {
     _surahScrollOffsets[surah] = offset;
     _prefs?.setString('surahScrollOffsets', json.encode(_surahScrollOffsets.map((key, value) => MapEntry(key.toString(), value))));
+  }
+
+  void setQuranPageMode(bool isPageMode) {
+    _isQuranPageMode = isPageMode;
+    _prefs?.setBool('isQuranPageMode', isPageMode);
+    notifyListeners();
+  }
+
+  void saveSurahLastPage(int surah, int page) {
+    _surahLastPages[surah] = page;
+    _prefs?.setString(
+      'surahLastPages',
+      json.encode(_surahLastPages.map((key, value) => MapEntry(key.toString(), value))),
+    );
+    notifyListeners();
   }
 
   void toggleFavoriteAyah(int surah, int ayah) {

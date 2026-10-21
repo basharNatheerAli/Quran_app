@@ -24,7 +24,9 @@ class QuranScreen extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const BookmarksScreen()),
+                MaterialPageRoute(
+                  builder: (context) => const BookmarksScreen(),
+                ),
               );
             },
           ),
@@ -54,44 +56,88 @@ class QuranScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          
           Consumer<AppProvider>(
             builder: (context, provider, child) {
               if (provider.recentSurahs.isEmpty) return const SizedBox.shrink();
               return Column(
                 children: [
                   Text(
-            "آخر السور التي قرأتها",
-            style: TextStyle(
-              fontSize: AppStyles.subtitleSize,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primaryDark,
-            ),
-          ).animate().fadeIn(duration: 300.ms),
+                    "آخر السور التي قرأتها",
+                    style: TextStyle(
+                      fontSize: AppStyles.subtitleSize,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primaryDark,
+                    ),
+                  ).animate().fadeIn(duration: 300.ms),
                   Container(
                     height: 60,
                     color: AppColors.primary.withOpacity(0.05),
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       itemCount: provider.recentSurahs.length,
                       itemBuilder: (context, index) {
                         final surahNumber = provider.recentSurahs[index];
+                        final hasSavedPage = provider.hasSurahLastPage(
+                          surahNumber,
+                        );
+                        final lastPage = provider.getSurahLastPage(surahNumber);
                         return Padding(
                           padding: const EdgeInsets.only(left: 8.0),
                           child: ActionChip(
-                            label: Text(
-                              quran.getSurahNameArabic(surahNumber),
-                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryDark),
+                            label: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  quran.getSurahNameArabic(surahNumber),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primaryDark,
+                                  ),
+                                ),
+                                if (hasSavedPage) ...[
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.15,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      'ص $lastPage',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.primaryDark,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                             backgroundColor: Colors.white,
                             elevation: 1,
-                            side: const BorderSide(color: AppColors.primaryDark, width: 1),
+                            side: const BorderSide(
+                              color: AppColors.primaryDark,
+                              width: 1,
+                            ),
                             onPressed: () {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => SurahScreen(surahNumber: surahNumber),
+                                  builder: (context) => SurahScreen(
+                                    surahNumber: surahNumber,
+                                    initialPage: lastPage,
+                                    openLastPage: true,
+                                  ),
                                 ),
                               );
                             },
@@ -110,7 +156,10 @@ class QuranScreen extends StatelessWidget {
               itemBuilder: (context, index) {
                 int surahNumber = index + 1;
                 return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: AppStyles.defaultBorderRadius,
                       ),
@@ -128,6 +177,7 @@ class QuranScreen extends StatelessWidget {
                             style: const TextStyle(
                               color: AppColors.primaryDark,
                               fontWeight: FontWeight.bold,
+                              fontSize: 15,
                             ),
                           ),
                         ),
