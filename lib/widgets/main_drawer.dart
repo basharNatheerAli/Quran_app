@@ -67,7 +67,7 @@ class MainDrawer extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           const Text(
-            'الإصدار 1.0.0',
+            'الإصدار 1.0.2',
             style: TextStyle(color: Colors.white70, fontSize: 14),
           ),
         ],
